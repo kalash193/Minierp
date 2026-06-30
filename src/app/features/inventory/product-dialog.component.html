@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Edit Product Details' : 'Add New Product' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="dialog-form">
+    <!-- SKU code -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>SKU Code</mat-label>
+      <input matInput formControlName="sku" placeholder="e.g. ELEC-010" style="text-transform: uppercase;" required>
+      <mat-error *ngIf="productForm.get('sku')?.hasError('required')">SKU is required</mat-error>
+      <mat-error *ngIf="productForm.get('sku')?.hasError('pattern')">SKU must be 3-10 characters/digits/hyphens only</mat-error>
+      <mat-error *ngIf="productForm.get('sku')?.hasError('skuTaken')">This SKU code is already registered</mat-error>
+    </mat-form-field>
+
+    <!-- Product name -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Product Name</mat-label>
+      <input matInput formControlName="name" placeholder="e.g. Noise Cancelling Headphones" required>
+      <mat-error *ngIf="productForm.get('name')?.hasError('required')">Product name is required</mat-error>
+      <mat-error *ngIf="productForm.get('name')?.hasError('minlength')">Name must be at least 3 characters long</mat-error>
+    </mat-form-field>
+
+    <!-- Category & Price -->
+    <div class="row-fields">
+      <mat-form-field appearance="outline">
+        <mat-label>Category</mat-label>
+        <mat-select formControlName="category" required>
+          @for (cat of categories; track cat) {
+            <mat-option [value]="cat">{{ cat }}</mat-option>
+          }
+        </mat-select>
+        <mat-error *ngIf="productForm.get('category')?.hasError('required')">Category is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Unit Price ($)</mat-label>
+        <input matInput type="number" formControlName="price" placeholder="0.00" step="0.01" min="0.01" required>
+        <mat-error *ngIf="productForm.get('price')?.hasError('required')">Price is required</mat-error>
+        <mat-error *ngIf="productForm.get('price')?.hasError('min')">Price must be greater than zero</mat-error>
+      </mat-form-field>
+    </div>
+
+    <!-- Stock & Min Stock -->
+    <div class="row-fields">
+      <mat-form-field appearance="outline">
+        <mat-label>Current Stock</mat-label>
+        <input matInput type="number" formControlName="stock" placeholder="0" min="0" required>
+        <mat-error *ngIf="productForm.get('stock')?.hasError('required')">Stock quantity is required</mat-error>
+        <mat-error *ngIf="productForm.get('stock')?.hasError('min')">Stock cannot be negative</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Min Stock Warning Limit</mat-label>
+        <input matInput type="number" formControlName="minStock" placeholder="5" min="0" required>
+        <mat-error *ngIf="productForm.get('minStock')?.hasError('required')">Min stock warning limit is required</mat-error>
+        <mat-error *ngIf="productForm.get('minStock')?.hasError('min')">Limit cannot be negative</mat-error>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" [disabled]="productForm.invalid" (click)="onSubmit()">Save Product</button>
+</mat-dialog-actions>

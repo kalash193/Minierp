@@ -1,0 +1,342 @@
+<div class="orders-wrapper">
+  <!-- Absolute spinner blocking view during invoice submissions -->
+  <app-loader [visible]="isLoading()" [absolute]="true" message="Updating orders ledger..."></app-loader>
+
+  @switch (substate()) {
+    
+    <!-- 1. SUB-STATE: ORDERS LIST LEDGER -->
+    @case ('list') {
+      <div class="title-section d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h1>Orders Ledger</h1>
+          <p>Record customer sales invoices, checkout products, and track status paths.</p>
+        </div>
+        <button mat-flat-button color="primary" (click)="substate.set('create')" class="action-btn">
+          <mat-icon>add_shopping_cart</mat-icon>
+          Create Order
+        </button>
+      </div>
+
+      <!-- Filters Row -->
+      <mat-card class="filter-card mat-elevation-z1 mb-4">
+        <mat-card-content class="filter-content d-flex justify-content-between align-items-center flex-wrap gap-3 py-2">
+          <!-- Selection filters -->
+          <div class="filters-inputs d-flex align-items-center gap-3 flex-wrap">
+            <!-- Status select -->
+            <div class="d-flex align-items-center gap-2">
+              <span class="filter-label">Status:</span>
+              <mat-form-field appearance="outline" class="select-field">
+                <mat-select [value]="statusFilter()" (selectionChange)="statusFilter.set($event.value)">
+                  <mat-option value="All">All</mat-option>
+                  <mat-option value="Pending">Pending</mat-option>
+                  <mat-option value="Processing">Processing</mat-option>
+                  <mat-option value="Shipped">Shipped</mat-option>
+                  <mat-option value="Delivered">Delivered</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <!-- Date Range -->
+            <div class="d-flex align-items-center gap-2">
+              <span class="filter-label">Date Range:</span>
+              <mat-form-field appearance="outline" class="date-range-field">
+                <mat-date-range-input [rangePicker]="picker">
+                  <input matStartDate placeholder="Start Date" [value]="startDateFilter()" (dateChange)="startDateFilter.set($event.value)">
+                  <input matEndDate placeholder="End Date" [value]="endDateFilter()" (dateChange)="endDateFilter.set($event.value)">
+                </mat-date-range-input>
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-date-range-picker #picker></mat-date-range-picker>
+              </mat-form-field>
+            </div>
+
+            <button mat-button color="warn" (click)="clearFilters()" [disabled]="statusFilter() === 'All' && !startDateFilter() && !endDateFilter()">
+              Clear Filters
+            </button>
+          </div>
+
+          <!-- Quick statistics summary -->
+          <div class="stats-summary d-flex align-items-center gap-3 text-muted small flex-wrap">
+            <span>Pending: <strong class="text-dark">{{ pendingCount() }}</strong></span>
+            <span>Processing: <strong class="text-dark">{{ processingCount() }}</strong></span>
+            <span>Shipped: <strong class="text-dark">{{ shippedCount() }}</strong></span>
+            <span>Delivered: <strong class="text-dark">{{ deliveredCount() }}</strong></span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Grid DataTable -->
+      <app-data-table
+        [data]="displayOrders()"
+        [columns]="columns"
+        [actions]="{ details: true }"
+        (details)="openOrderDetails($event)"
+        searchPlaceholder="Search by ID or Customer name...">
+      </app-data-table>
+    }
+
+    <!-- 2. SUB-STATE: CREATE ORDER FLOW -->
+    @case ('create') {
+      <div class="title-section d-flex justify-content-between align-items-center">
+        <div>
+          <h1>Create New Order</h1>
+          <p>Assemble products, validate stock quantities, and checkout.</p>
+        </div>
+        <button mat-stroked-button (click)="cancelCreate()">
+          <mat-icon>arrow_back</mat-icon>
+          Back to Ledger
+        </button>
+      </div>
+
+      <div class="create-order-grid">
+        <!-- Customer & Cart Details (Left Column) -->
+        <div class="create-left-col">
+          <mat-card class="form-card mat-elevation-z1 p-4 mb-4">
+            <h3 class="card-section-title">Customer Details</h3>
+            <form [formGroup]="orderForm" class="customer-form mt-3">
+              <div class="row-fields">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Customer Full Name</mat-label>
+                  <input matInput formControlName="customerName" placeholder="e.g. Alice Smith" required>
+                  <mat-error *ngIf="orderForm.get('customerName')?.hasError('required')">Name is required</mat-error>
+                  <mat-error *ngIf="orderForm.get('customerName')?.hasError('minlength')">Name must be at least 3 characters long</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Email Address</mat-label>
+                  <input matInput type="email" formControlName="customerEmail" placeholder="e.g. alice&#64;example.com" required>
+                  <mat-error *ngIf="orderForm.get('customerEmail')?.hasError('required')">Email is required</mat-error>
+                  <mat-error *ngIf="orderForm.get('customerEmail')?.hasError('email')">Please enter a valid email address</mat-error>
+                </mat-form-field>
+              </div>
+            </form>
+          </mat-card>
+
+          <!-- Cart summary table -->
+          <mat-card class="form-card mat-elevation-z1 p-4">
+            <h3 class="card-section-title">Cart Items</h3>
+            
+            <div class="cart-table-wrapper mt-3 border rounded overflow-hidden">
+              <table class="cart-table">
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th class="text-right">Unit Price</th>
+                    <th class="text-center">Quantity</th>
+                    <th class="text-right">Line Total</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of cartItems(); track item.productId; let idx = $index) {
+                    <tr>
+                      <td>{{ item.productName }}</td>
+                      <td class="text-right">{{ item.price | currency:'USD' }}</td>
+                      <td class="text-center">{{ item.quantity }}</td>
+                      <td class="text-right">{{ (item.price * item.quantity) | currency:'USD' }}</td>
+                      <td class="text-center">
+                        <button mat-icon-button color="warn" (click)="removeFromCart(idx)" aria-label="Remove item">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="5" class="empty-cart-row">
+                        <mat-icon class="empty-cart-icon">shopping_cart</mat-icon>
+                        <span>Your shopping cart is empty. Add products from the right panel.</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </mat-card>
+        </div>
+
+        <!-- Selection Panel (Right Column) -->
+        <div class="create-right-col">
+          <mat-card class="selection-card mat-elevation-z1 p-4">
+            <h3 class="card-section-title">Add Items</h3>
+            
+            <div class="add-items-form mt-4">
+              <!-- Select product -->
+              <mat-form-field appearance="outline" class="full-width mb-3">
+                <mat-label>Select Product</mat-label>
+                <mat-select (selectionChange)="onProductSelect($event.value)" #prodSelect>
+                  <mat-option value="" disabled>Choose a catalog SKU</mat-option>
+                  @for (p of rawProducts(); track p.id) {
+                    <mat-option [value]="p.id" [disabled]="p.stock === 0">
+                      {{ p.name }} (Stock: {{ p.stock }}) - {{ p.price | currency:'USD' }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              @if (selectedProduct(); as product) {
+                <div class="stock-meta-row mb-3 p-2 bg-light rounded">
+                  <div class="d-flex justify-content-between small">
+                    <span class="text-muted">Available Stock:</span>
+                    <strong>{{ product.stock }} units</strong>
+                  </div>
+                  @if (product.stock <= product.minStock) {
+                    <span class="warning-badge small mt-1 d-block text-danger font-weight-bold">
+                      <mat-icon class="warn-icon">warning</mat-icon> Low stock alert!
+                    </span>
+                  }
+                </div>
+
+                <!-- Select qty -->
+                <mat-form-field appearance="outline" class="full-width mb-3">
+                  <mat-label>Order Quantity</mat-label>
+                  <input matInput type="number" [ngModel]="orderQuantity()" (ngModelChange)="orderQuantity.set($event)" min="1" [max]="product.stock">
+                </mat-form-field>
+
+                <button mat-raised-button color="primary" class="full-width py-2.5" (click)="addToCart(); prodSelect.value = ''">
+                  Add to Cart
+                </button>
+              } @else {
+                <div class="placeholder-select p-4 border rounded text-center text-muted small mb-3">
+                  Select a product above to configure quantity and add to cart.
+                </div>
+              }
+
+              <mat-divider class="my-4"></mat-divider>
+
+              <!-- Checkout summary -->
+              <div class="checkout-summary d-flex justify-content-between align-items-center mb-4">
+                <span class="text-muted">Grand Total:</span>
+                <span class="grand-total-val">{{ grandTotal() | currency:'USD' }}</span>
+              </div>
+
+              <button mat-raised-button color="accent" class="full-width checkout-btn py-3" [disabled]="orderForm.invalid || cartItems().length === 0" (click)="submitOrder()">
+                Place Order
+              </button>
+            </div>
+          </mat-card>
+        </div>
+      </div>
+    }
+
+    <!-- 3. SUB-STATE: ORDER DETAILS & WORKFLOW -->
+    @case ('details') {
+      @if (selectedOrder(); as order) {
+        <div class="title-section d-flex justify-content-between align-items-center">
+          <div>
+            <h1>Order Details: #{{ order.id }}</h1>
+            <p>Review customer billing items and trace audit steps.</p>
+          </div>
+          <button mat-stroked-button (click)="backToList()">
+            <mat-icon>arrow_back</mat-icon>
+            Back to Ledger
+          </button>
+        </div>
+
+        <div class="details-grid">
+          <!-- Left columns: invoice meta and items table -->
+          <div class="details-left-col">
+            <!-- Details meta cards -->
+            <mat-card class="details-card mat-elevation-z1 p-4 mb-4">
+              <h3 class="card-section-title">Invoice Information</h3>
+              <div class="invoice-meta-grid mt-4">
+                <div class="meta-item">
+                  <span class="meta-lbl">Customer Name</span>
+                  <span class="meta-val">{{ order.customerName }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-lbl">Email Address</span>
+                  <span class="meta-val">{{ order.customerEmail }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-lbl">Date Placed</span>
+                  <span class="meta-val">{{ order.orderDate | date:'medium' }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-lbl">Invoice Total</span>
+                  <span class="meta-val total-highlight">{{ order.totalPrice | currency:'USD' }}</span>
+                </div>
+              </div>
+            </mat-card>
+
+            <!-- Table of ordered items -->
+            <mat-card class="details-card mat-elevation-z1 p-4">
+              <h3 class="card-section-title">Itemized Order Summary</h3>
+              <div class="items-table-wrapper mt-3 border rounded overflow-hidden">
+                <table class="cart-table">
+                  <thead>
+                    <tr>
+                      <th>Product Description</th>
+                      <th class="text-right">Unit Price</th>
+                      <th class="text-center">Quantity</th>
+                      <th class="text-right">Line Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of order.items; track item.productId) {
+                      <tr>
+                        <td>{{ item.productName }}</td>
+                        <td class="text-right">{{ item.price | currency:'USD' }}</td>
+                        <td class="text-center">{{ item.quantity }}</td>
+                        <td class="text-right">{{ (item.price * item.quantity) | currency:'USD' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </mat-card>
+          </div>
+
+          <!-- Right column: workflow controls & timeline -->
+          <div class="details-right-col">
+            <!-- Workflow box -->
+            <mat-card class="details-card mat-elevation-z1 p-4 mb-4 text-center">
+              <h3 class="card-section-title text-left">Fulfillment Actions</h3>
+              
+              <div class="workflow-status-row my-4 d-flex justify-content-between align-items-center px-2">
+                <span class="text-muted font-weight-bold">Current Status:</span>
+                <span class="custom-badge" [ngClass]="{
+                  'badge-success': order.status === 'Delivered',
+                  'badge-info': order.status === 'Shipped',
+                  'badge-warning': order.status === 'Processing',
+                  'badge-neutral': order.status === 'Pending'
+                }">{{ order.status }}</span>
+              </div>
+
+              @if (getNextStatus(order.status); as next) {
+                <button mat-raised-button color="accent" class="w-100 py-3 font-weight-bold" (click)="advanceOrderStatus()">
+                  <mat-icon>local_shipping</mat-icon>
+                  Mark as "{{ next }}"
+                </button>
+              } @else {
+                <div class="fulfilled-box p-3 bg-light rounded text-success font-weight-bold d-flex align-items-center justify-content-center gap-2">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Order Fully Fulfilled</span>
+                </div>
+              }
+            </mat-card>
+
+            <!-- Timeline history -->
+            <mat-card class="details-card mat-elevation-z1 p-4">
+              <h3 class="card-section-title">Audit Tracker Log</h3>
+              
+              <div class="timeline mt-4">
+                @for (hist of order.statusHistory; track hist.status; let last = $last) {
+                  <div class="timeline-item">
+                    <div class="timeline-node" [ngClass]="{'timeline-node-active': last}">
+                      <mat-icon>check</mat-icon>
+                    </div>
+                    <div class="timeline-content">
+                      <span class="timeline-status">{{ hist.status }}</span>
+                      <div class="timeline-meta">
+                        <strong>{{ hist.updatedBy }}</strong> • {{ hist.updatedAt | date:'short' }}
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </mat-card>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>

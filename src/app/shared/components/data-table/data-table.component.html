@@ -1,0 +1,97 @@
+<div class="table-container mat-elevation-z1">
+  <!-- Search Filter Header -->
+  <div class="table-header">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-label>{{ searchPlaceholder }}</mat-label>
+      <input matInput (keyup)="applyFilter($event)" placeholder="Type to filter..." #input>
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  <!-- Mat Table -->
+  <table mat-table [dataSource]="dataSource" matSort>
+    <!-- Columns definitions loop -->
+    @for (col of columns; track col.key) {
+      <ng-container [matColumnDef]="col.key">
+        <!-- Header Cell -->
+        @if (col.sortable) {
+          <th mat-header-cell *matHeaderCellDef mat-sort-header> {{ col.label }} </th>
+        } @else {
+          <th mat-header-cell *matHeaderCellDef> {{ col.label }} </th>
+        }
+
+        <!-- Data Cell -->
+        <td mat-cell *matCellDef="let element">
+          @if (col.type === 'currency') {
+            {{ element[col.key] | currency:'USD':'symbol':'1.2-2' }}
+          } @else if (col.type === 'date') {
+            {{ element[col.key] | date:'mediumDate' }}
+          } @else if (col.type === 'number') {
+            {{ element[col.key] | number }}
+          } @else if (col.type === 'badge') {
+            <span class="custom-badge" [ngClass]="getBadgeClass(col, element[col.key])">
+              {{ element[col.key] }}
+            </span>
+          } @else {
+            {{ element[col.key] }}
+          }
+        </td>
+      </ng-container>
+    }
+
+    <!-- Actions Column -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef class="actions-header"> Actions </th>
+      <td mat-cell *matCellDef="let element" class="actions-cell">
+        <div class="actions-wrapper">
+          <!-- Details button -->
+          @if (actions.details) {
+            <button mat-icon-button color="primary" (click)="details.emit(element)" matTooltip="View Details">
+              <mat-icon>visibility</mat-icon>
+            </button>
+          }
+
+          <!-- Edit button -->
+          @if (actions.edit) {
+            <button mat-icon-button class="edit-btn" (click)="edit.emit(element)" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+          }
+
+          <!-- Toggle toggle -->
+          @if (actions.toggle) {
+            <mat-slide-toggle
+              [checked]="getToggleState(element)"
+              [matTooltip]="actions.toggleTooltip || 'Toggle'"
+              (change)="onToggleChange($event, element)">
+            </mat-slide-toggle>
+          }
+
+          <!-- Delete button -->
+          @if (actions.delete) {
+            <button mat-icon-button color="warn" (click)="delete.emit(element)" matTooltip="Delete">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </div>
+      </td>
+    </ng-container>
+
+    <!-- Table Rows -->
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+    <!-- No Data Row -->
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell no-data-cell" [attr.colspan]="displayedColumns.length">
+        <div class="no-data-content">
+          <mat-icon class="no-data-icon">search_off</mat-icon>
+          <span>No matching records found.</span>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Paginator -->
+  <mat-paginator [pageSizeOptions]="pageSizeOptions" [pageSize]="defaultPageSize" showFirstLastButtons></mat-paginator>
+</div>

@@ -1,0 +1,25 @@
+<div class="users-wrapper">
+  <!-- Absolute spinner blocking view during saves -->
+  <app-loader [visible]="isLoading()" [absolute]="true" message="Updating user profiles..."></app-loader>
+
+  <div class="title-section d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1>User Accounts</h1>
+      <p>Assign security permissions, register new staff accounts, and manage system access.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="openUserDialog()" class="add-btn">
+      <mat-icon>person_add</mat-icon>
+      Register User
+    </button>
+  </div>
+
+  <!-- Reusable Table Component -->
+  <app-data-table
+    [data]="displayUsers()"
+    [columns]="columns"
+    [actions]="getTableActions()"
+    (edit)="openUserDialog($event)"
+    (toggle)="onToggleUserStatus($event)"
+    searchPlaceholder="Search users by Name or Email address...">
+  </app-data-table>
+</div>

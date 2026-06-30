@@ -1,0 +1,97 @@
+.reports-wrapper {
+  position: relative;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 20px; }
+
+.mb-4 {
+  margin-bottom: 20px;
+}
+
+.export-btn {
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+}
+
+.export-btn mat-icon {
+  margin-right: 4px;
+}
+
+/* Toggle Group custom design */
+.toggle-container {
+  display: flex;
+}
+
+::ng-deep .toggle-container .mat-button-toggle-group {
+  border-radius: 8px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: white;
+  overflow: hidden;
+}
+
+::ng-deep .toggle-container .mat-button-toggle {
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  color: #64748b !important;
+  border-right: 1px solid #cbd5e1 !important;
+}
+
+::ng-deep .toggle-container .mat-button-toggle-checked {
+  background-color: #0284c7 !important;
+  color: white !important;
+}
+
+::ng-deep .toggle-container .mat-button-toggle-checked mat-icon {
+  color: white !important;
+}
+
+/* Filters Card */
+.filter-card {
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.filter-content {
+  padding: 12px 24px !important;
+}
+
+.filter-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.select-field {
+  width: 160px;
+}
+
+.date-range-field {
+  width: 250px;
+}
+
+::ng-deep .select-field .mat-mdc-form-field-subscript-wrapper,
+::ng-deep .date-range-field .mat-mdc-form-field-subscript-wrapper {
+  display: none; /* Hide spacing padding for filters */
+}
+
+.text-dark {
+  color: #0f172a;
+}

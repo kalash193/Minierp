@@ -1,0 +1,100 @@
+@if (isAuthenticated()) {
+  <mat-sidenav-container class="sidenav-container">
+    <!-- Sidebar Navigation Drawer -->
+    <mat-sidenav #sidenav mode="side" opened class="sidenav">
+      <div class="sidebar-header">
+        <mat-icon class="logo-icon">layers</mat-icon>
+        <span class="logo-title">Mini ERP</span>
+      </div>
+
+      <!-- User Info Box -->
+      @if (currentUser(); as user) {
+        <div class="user-profile-box">
+          <div class="avatar-circle">
+            {{ getAvatarInitials(user?.name) }}
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ user?.name }}</span>
+            <span class="user-email">{{ user?.email }}</span>
+            <span class="user-role-badge" [ngClass]="{'badge-admin': user?.role === 'Admin', 'badge-staff': user?.role === 'Staff'}">
+              {{ user?.role }}
+            </span>
+          </div>
+        </div>
+      }
+
+      <!-- Links List -->
+      <mat-nav-list class="nav-list">
+        <a mat-list-item routerLink="/dashboard" routerLinkActive="active-nav">
+          <mat-icon matListItemIcon>dashboard</mat-icon>
+          <span matListItemTitle>Dashboard</span>
+        </a>
+        <a mat-list-item routerLink="/inventory" routerLinkActive="active-nav">
+          <mat-icon matListItemIcon>storefront</mat-icon>
+          <span matListItemTitle>Inventory</span>
+        </a>
+        <a mat-list-item routerLink="/orders" routerLinkActive="active-nav">
+          <mat-icon matListItemIcon>shopping_cart</mat-icon>
+          <span matListItemTitle>Orders</span>
+        </a>
+        
+        <!-- Admin only users list -->
+        @if (isAdmin()) {
+          <a mat-list-item routerLink="/users" routerLinkActive="active-nav">
+            <mat-icon matListItemIcon>people</mat-icon>
+            <span matListItemTitle>User Management</span>
+          </a>
+        }
+        
+        <a mat-list-item routerLink="/reports" routerLinkActive="active-nav">
+          <mat-icon matListItemIcon>bar_chart</mat-icon>
+          <span matListItemTitle>Reports</span>
+        </a>
+      </mat-nav-list>
+
+      <div class="sidebar-footer">
+        <span>© 2026 Mini ERP</span>
+        <span class="app-version">v1.0</span>
+      </div>
+    </mat-sidenav>
+
+    <!-- Main View Content -->
+    <mat-sidenav-content class="sidenav-content">
+      <mat-toolbar color="primary" class="toolbar mat-elevation-z2">
+        <button mat-icon-button (click)="sidenav.toggle()" aria-label="Toggle sidenav">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span class="toolbar-title">Mini ERP Workspace</span>
+        <span class="flex-spacer"></span>
+
+        <!-- Profile drop down -->
+        @if (currentUser(); as user) {
+          <button mat-button [matMenuTriggerFor]="profileMenu" class="profile-menu-trigger">
+            <mat-icon>account_circle</mat-icon>
+            <span class="profile-username">{{ user?.name }}</span>
+            <mat-icon>arrow_drop_down</mat-icon>
+          </button>
+          
+          <mat-menu #profileMenu="matMenu" xPosition="before" class="custom-profile-menu">
+            <div class="menu-profile-header">
+              <strong class="menu-name">{{ user?.name }}</strong>
+              <span class="menu-email">{{ user?.email }}</span>
+            </div>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="logout()" class="logout-menu-item">
+              <mat-icon color="warn">logout</mat-icon>
+              <span>Logout</span>
+            </button>
+          </mat-menu>
+        }
+      </mat-toolbar>
+
+      <!-- Sub Page container -->
+      <main class="page-container">
+        <router-outlet></router-outlet>
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+} @else {
+  <router-outlet></router-outlet>
+}

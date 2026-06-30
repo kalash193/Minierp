@@ -1,0 +1,61 @@
+@import "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap";
+
+html, body { height: 100%; }
+body { 
+  margin: 0; 
+  font-family: 'Outfit', Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+/* Global transitions and alignments */
+.flex-spacer {
+  flex: 1 1 auto;
+}
+
+.title-section {
+  margin-bottom: 24px;
+}
+
+.title-section h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
+}
+
+.title-section p {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Page Card wrappers */
+.page-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Customized Snackbar Toast classes */
+.toast-success {
+  --mdc-snackbar-container-color: #15803d !important;
+  --mdc-snackbar-supporting-text-color: #ffffff !important;
+}
+
+.toast-error {
+  --mdc-snackbar-container-color: #b91c1c !important;
+  --mdc-snackbar-supporting-text-color: #ffffff !important;
+}
+
+.toast-info {
+  --mdc-snackbar-container-color: #0f172a !important;
+  --mdc-snackbar-supporting-text-color: #ffffff !important;
+}
+
+::ng-deep .mat-mdc-snack-bar-action {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}

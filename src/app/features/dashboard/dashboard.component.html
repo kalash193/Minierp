@@ -1,0 +1,153 @@
+<div class="dashboard-wrapper">
+  <!-- Absolute spinner blocking view during query compile -->
+  <app-loader [visible]="isLoading()" [absolute]="true" message="Refreshing dashboard analytics..."></app-loader>
+
+  <div class="title-section d-flex justify-content-between align-items-center">
+    <div>
+      <h1>Dashboard Overview</h1>
+      <p>Real-time analytics on stock, orders, and sales activity.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="refreshDashboard()" class="refresh-btn">
+      <mat-icon>refresh</mat-icon>
+      Refresh Data
+    </button>
+  </div>
+
+  <!-- KPI Cards Container -->
+  <div class="kpi-grid">
+    <!-- Total Orders -->
+    <mat-card class="kpi-card bg-blue mat-elevation-z1">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Total Orders</span>
+          <h2 class="kpi-value">{{ totalOrders() }}</h2>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>shopping_cart</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Total Revenue -->
+    <mat-card class="kpi-card bg-green mat-elevation-z1">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Total Revenue</span>
+          <h2 class="kpi-value">{{ totalRevenue() | currency:'USD':'symbol':'1.2-2' }}</h2>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>attach_money</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Low Stock Items -->
+    <mat-card class="kpi-card bg-yellow mat-elevation-z1" [ngClass]="{'alert-card': lowStockItems() > 0}">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Low Stock SKU</span>
+          <h2 class="kpi-value">{{ lowStockItems() }}</h2>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>warning</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Active Users -->
+    <mat-card class="kpi-card bg-purple mat-elevation-z1">
+      <mat-card-content class="kpi-content">
+        <div class="kpi-info">
+          <span class="kpi-label">Active Users</span>
+          <h2 class="kpi-value">{{ activeUsers() }}</h2>
+        </div>
+        <div class="kpi-icon-wrapper">
+          <mat-icon>people</mat-icon>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Charts & Activity Layout -->
+  <div class="dashboard-body">
+    <!-- Chart 1: Line / Area Chart (Left Column) -->
+    <div class="chart-container page-card p-4">
+      <h3 class="chart-title">Sales Revenue Trend</h3>
+      <p class="chart-subtitle">Gross sales revenue mapped over invoice transaction dates</p>
+      
+      <div class="chart-wrapper">
+        @if (salesTrendData.length > 0 && salesTrendData[0].series.length > 0) {
+          <ngx-charts-area-chart
+            [scheme]="colorScheme"
+            [results]="salesTrendData"
+            [gradient]="true"
+            [xAxis]="showXAxis"
+            [yAxis]="showYAxis"
+            [legend]="showLegend"
+            [showXAxisLabel]="showXAxisLabel"
+            [showYAxisLabel]="showYAxisLabel"
+            [autoScale]="true">
+          </ngx-charts-area-chart>
+        } @else {
+          <div class="empty-chart">
+            <mat-icon>show_chart</mat-icon>
+            <span>No transaction data available yet.</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right Side Sidebar (Category Pie Chart & Activities) -->
+    <div class="dashboard-side">
+      <!-- Category Chart -->
+      <div class="side-card page-card p-4">
+        <h3 class="chart-title">Sales by Category</h3>
+        
+        <div class="mini-chart-wrapper">
+          @if (categorySalesData.length > 0) {
+            <ngx-charts-pie-chart
+              [scheme]="colorScheme"
+              [results]="categorySalesData"
+              [gradient]="gradient"
+              [legend]="false"
+              [labels]="true"
+              [doughnut]="true">
+            </ngx-charts-pie-chart>
+          } @else {
+            <div class="empty-chart">
+              <mat-icon>pie_chart</mat-icon>
+              <span>No categories calculated.</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Recent Activities -->
+      <div class="side-card page-card p-4">
+        <h3 class="chart-title">Recent System Logs</h3>
+        
+        <div class="activities-list">
+          @for (act of recentActivities; track act.id) {
+            <div class="activity-item">
+              <div class="activity-icon-box" [ngClass]="getActivityColorClass(act.type)">
+                <mat-icon>{{ getActivityIcon(act.type) }}</mat-icon>
+              </div>
+              <div class="activity-details">
+                <p class="activity-desc">{{ act.description }}</p>
+                <div class="activity-meta">
+                  <span class="activity-user">{{ act.user }}</span>
+                  <span class="activity-time">{{ act.timestamp | date:'shortTime' }}</span>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-logs">
+              <mat-icon>history</mat-icon>
+              <span>No recent log activity.</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

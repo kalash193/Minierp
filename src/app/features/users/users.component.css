@@ -1,0 +1,31 @@
+.users-wrapper {
+  position: relative;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.gap-3 { gap: 12px; }
+
+.add-btn {
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+}
+
+.add-btn mat-icon {
+  margin-right: 4px;
+}

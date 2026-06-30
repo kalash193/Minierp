@@ -1,0 +1,58 @@
+<div class="inventory-wrapper">
+  <!-- Absolute spinner blocking view during query edits -->
+  <app-loader [visible]="isLoading()" [absolute]="true" message="Updating product catalog..."></app-loader>
+
+  <div class="title-section d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1>Inventory Catalog</h1>
+      <p>Configure product SKU stock warnings, adjust units, and edit details.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="openProductDialog()" class="add-btn">
+      <mat-icon>add</mat-icon>
+      Add Product
+    </button>
+  </div>
+
+  <!-- Category filter block -->
+  <mat-card class="filter-card mat-elevation-z1 mb-4">
+    <mat-card-content class="filter-content d-flex justify-content-between align-items-center flex-wrap gap-3 py-2">
+      <!-- Selector -->
+      <div class="filter-selection d-flex align-items-center gap-3">
+        <span class="filter-label">Filter Category:</span>
+        <mat-form-field appearance="outline" class="category-select-field">
+          <mat-select [value]="selectedCategory()" (selectionChange)="selectedCategory.set($event.value)">
+            @for (cat of categories; track cat) {
+              <mat-option [value]="cat">{{ cat }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Stats Summary -->
+      <div class="stats-summary d-flex align-items-center gap-4 text-muted small flex-wrap">
+        <div class="d-flex align-items-center gap-2">
+          <span class="indicator-dot bg-success"></span>
+          <span>Total SKU: <strong class="text-dark">{{ totalSKUCount() }}</strong></span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="indicator-dot bg-warning"></span>
+          <span>Low Stock SKU: <strong class="text-dark">{{ lowStockCount() }}</strong></span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="indicator-dot bg-danger"></span>
+          <span>Out of Stock: <strong class="text-dark">{{ outStockCount() }}</strong></span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Generic Data Table component -->
+  <app-data-table
+    [data]="displayProducts()"
+    [columns]="columns"
+    [actions]="getTableActions()"
+    (edit)="openProductDialog($event)"
+    (delete)="deleteProduct($event)"
+    searchPlaceholder="Search by SKU, Name or Category...">
+  </app-data-table>
+</div>

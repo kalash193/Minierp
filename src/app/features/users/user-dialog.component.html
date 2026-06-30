@@ -1,0 +1,43 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Edit User Profile' : 'Register New User' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="dialog-form">
+    <!-- User Name -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Full Name</mat-label>
+      <input matInput formControlName="name" placeholder="e.g. John Doe" required>
+      <mat-error *ngIf="userForm.get('name')?.hasError('required')">Name is required</mat-error>
+      <mat-error *ngIf="userForm.get('name')?.hasError('minlength')">Name must be at least 3 characters long</mat-error>
+    </mat-form-field>
+
+    <!-- User Email -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Email Address</mat-label>
+      <input matInput type="email" formControlName="email" placeholder="e.g. john&#64;minierp.com" required>
+      <mat-error *ngIf="userForm.get('email')?.hasError('required')">Email is required</mat-error>
+      <mat-error *ngIf="userForm.get('email')?.hasError('email')">Please enter a valid email address</mat-error>
+      <mat-error *ngIf="userForm.get('email')?.hasError('emailTaken')">This email address is already registered</mat-error>
+    </mat-form-field>
+
+    <!-- Role select -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Security Role</mat-label>
+      <mat-select formControlName="role" required>
+        <mat-option value="Staff">Staff</mat-option>
+        <mat-option value="Admin">Admin</mat-option>
+      </mat-select>
+      <mat-error *ngIf="userForm.get('role')?.hasError('required')">Security role is required</mat-error>
+    </mat-form-field>
+
+    <!-- Account active switch -->
+    <div class="toggle-row">
+      <span class="text-muted small">Account Active</span>
+      <mat-slide-toggle formControlName="isActive"></mat-slide-toggle>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-raised-button color="primary" [disabled]="userForm.invalid" (click)="onSubmit()">Save User</button>
+</mat-dialog-actions>

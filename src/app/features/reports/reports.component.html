@@ -1,0 +1,108 @@
+<div class="reports-wrapper">
+  <!-- Absolute spinner blocking view during CSV generates -->
+  <app-loader [visible]="isLoading()" [absolute]="true" message="Compiling ledger metrics..."></app-loader>
+
+  <div class="title-section d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1>Analytics Reports</h1>
+      <p>Evaluate inventory values, trace transactions, and export visible datasets to CSV.</p>
+    </div>
+    <button mat-flat-button color="accent" (click)="exportToCSV()" class="export-btn">
+      <mat-icon>file_download</mat-icon>
+      Export CSV
+    </button>
+  </div>
+
+  <!-- Toggle Button group -->
+  <div class="toggle-container mb-4">
+    <mat-button-toggle-group [value]="activeReport()" (change)="activeReport.set($event.value); onReportToggle()" aria-label="Report Type selection">
+      <mat-button-toggle value="inventory">
+        <mat-icon>storefront</mat-icon>
+        Inventory Summary
+      </mat-button-toggle>
+      <mat-button-toggle value="orders">
+        <mat-icon>receipt_long</mat-icon>
+        Sales & Orders Ledger
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  <!-- Dynamic Filter and Stats Panel -->
+  <mat-card class="filter-card mat-elevation-z1 mb-4">
+    <mat-card-content class="filter-content d-flex justify-content-between align-items-center flex-wrap gap-3 py-2">
+      <!-- 1. INVENTORY FILTERS -->
+      @if (activeReport() === 'inventory') {
+        <div class="filters-inputs d-flex align-items-center gap-3">
+          <span class="filter-label">Category:</span>
+          <mat-form-field appearance="outline" class="select-field">
+            <mat-select [value]="selectedCategory()" (selectionChange)="selectedCategory.set($event.value)">
+              @for (cat of categories; track cat) {
+                <mat-option [value]="cat">{{ cat }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button mat-button (click)="resetFilters()" [disabled]="selectedCategory() === 'All'">Reset</button>
+        </div>
+
+        <div class="stats-summary d-flex align-items-center gap-4 text-muted small flex-wrap">
+          <span>SKUs: <strong class="text-dark">{{ inventoryReportData().length }}</strong></span>
+          <span>Stock Units: <strong class="text-dark">{{ totalStockUnits() | number }}</strong></span>
+          <span>Valuation: <strong class="text-primary fs-6 font-weight-bold">{{ totalSKUValuation() | currency:'USD' }}</strong></span>
+        </div>
+      } @else {
+        <!-- 2. SALES LEDGER FILTERS -->
+        <div class="filters-inputs d-flex align-items-center gap-3 flex-wrap">
+          <div class="d-flex align-items-center gap-2">
+            <span class="filter-label">Status:</span>
+            <mat-form-field appearance="outline" class="select-field">
+              <mat-select [value]="selectedStatus()" (selectionChange)="selectedStatus.set($event.value)">
+                <mat-option value="All">All</mat-option>
+                <mat-option value="Pending">Pending</mat-option>
+                <mat-option value="Processing">Processing</mat-option>
+                <mat-option value="Shipped">Shipped</mat-option>
+                <mat-option value="Delivered">Delivered</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <span class="filter-label">Date Range:</span>
+            <mat-form-field appearance="outline" class="date-range-field">
+              <mat-date-range-input [rangePicker]="repPicker">
+                <input matStartDate placeholder="Start Date" [value]="startDate()" (dateChange)="startDate.set($event.value)">
+                <input matEndDate placeholder="End Date" [value]="endDate()" (dateChange)="endDate.set($event.value)">
+              </mat-date-range-input>
+              <mat-datepicker-toggle matIconSuffix [for]="repPicker"></mat-datepicker-toggle>
+              <mat-date-range-picker #repPicker></mat-date-range-picker>
+            </mat-form-field>
+          </div>
+
+          <button mat-button (click)="resetFilters()" [disabled]="selectedStatus() === 'All' && !startDate() && !endDate()">Reset</button>
+        </div>
+
+        <div class="stats-summary d-flex align-items-center gap-4 text-muted small flex-wrap">
+          <span>Orders: <strong class="text-dark">{{ ordersReportData().length }}</strong></span>
+          <span>Items: <strong class="text-dark">{{ totalProductsOrdered() | number }}</strong></span>
+          <span>Sales Total: <strong class="text-primary fs-6 font-weight-bold">{{ totalSalesRevenue() | currency:'USD' }}</strong></span>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Dynamic DataTable component -->
+  @if (activeReport() === 'inventory') {
+    <app-data-table
+      [data]="inventoryReportData()"
+      [columns]="inventoryColumns"
+      [actions]="{}"
+      searchPlaceholder="Filter inventory summary...">
+    </app-data-table>
+  } @else {
+    <app-data-table
+      [data]="ordersReportData()"
+      [columns]="ordersColumns"
+      [actions]="{}"
+      searchPlaceholder="Filter sales ledger...">
+    </app-data-table>
+  }
+</div>
